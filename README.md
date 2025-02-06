@@ -2,7 +2,7 @@
 
 A lightweight, modern C++11 metrics library that implements the OpenMetrics format, designed for easy integration and high performance. Perfect for both enterprise applications and resource-constrained embedded systems.
 
-[![Build Status](https://github.com/yourusername/metricz-cpp/workflows/CI/badge.svg)](https://github.com/yourusername/metricz-cpp/actions)
+[![Build Status](https://github.com/nickolajgrishuk/metricz-cpp/workflows/CI/badge.svg)](https://github.com/nickolajgrishuk/metricz-cpp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
