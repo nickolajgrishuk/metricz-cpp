@@ -1,11 +1,11 @@
 #pragma once
 
-#include <string>
-#include <map>
-#include <vector>
-#include <mutex>
-#include <memory>
 #include <chrono>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
 
 namespace metrics {
 
@@ -22,7 +22,7 @@ enum class MetricType {
 struct Label {
     std::string name;
     std::string value;
-    
+
     Label(const std::string& n, const std::string& v) : name(n), value(v) {}
 };
 
@@ -31,18 +31,25 @@ using Labels = std::vector<Label>;
 // Base class for all metrics
 class Metric {
 public:
-    explicit Metric(const std::string& name, const std::string& help = "", const Labels& labels = {})
+    explicit Metric(const std::string& name, const std::string& help = "",
+                    const Labels& labels = {})
         : name_(name), help_(help), labels_(labels) {}
-    
+
     virtual ~Metric() = default;
-    
+
     virtual std::string serialize() const = 0;
     virtual MetricType type() const = 0;
-    
-    const std::string& name() const { return name_; }
-    const std::string& help() const { return help_; }
-    const Labels& labels() const { return labels_; }
-    
+
+    const std::string& name() const {
+        return name_;
+    }
+    const std::string& help() const {
+        return help_;
+    }
+    const Labels& labels() const {
+        return labels_;
+    }
+
     void set_labels(const Labels& labels) {
         std::lock_guard<std::mutex> lock(mutex_);
         labels_ = labels;
@@ -58,20 +65,23 @@ protected:
 // Counter - monotonically increasing metric
 class Counter : public Metric {
 public:
-    explicit Counter(const std::string& name, const std::string& help = "", const Labels& labels = {})
+    explicit Counter(const std::string& name, const std::string& help = "",
+                     const Labels& labels = {})
         : Metric(name, help, labels), value_(0.0) {}
-    
+
     void inc(double v = 1.0) {
         std::lock_guard<std::mutex> lock(mutex_);
         value_ += v;
     }
-    
+
     double value() const {
         std::lock_guard<std::mutex> lock(mutex_);
         return value_;
     }
-    
-    MetricType type() const override { return MetricType::Counter; }
+
+    MetricType type() const override {
+        return MetricType::Counter;
+    }
     std::string serialize() const override;
 
 private:
@@ -83,28 +93,30 @@ class Gauge : public Metric {
 public:
     explicit Gauge(const std::string& name, const std::string& help = "", const Labels& labels = {})
         : Metric(name, help, labels), value_(0.0) {}
-    
+
     void set(double v) {
         std::lock_guard<std::mutex> lock(mutex_);
         value_ = v;
     }
-    
+
     void inc(double v = 1.0) {
         std::lock_guard<std::mutex> lock(mutex_);
         value_ += v;
     }
-    
+
     void dec(double v = 1.0) {
         std::lock_guard<std::mutex> lock(mutex_);
         value_ -= v;
     }
-    
+
     double value() const {
         std::lock_guard<std::mutex> lock(mutex_);
         return value_;
     }
-    
-    MetricType type() const override { return MetricType::Gauge; }
+
+    MetricType type() const override {
+        return MetricType::Gauge;
+    }
     std::string serialize() const override;
 
 private:
@@ -114,16 +126,18 @@ private:
 // Histogram - distribution of values in buckets
 class Histogram : public Metric {
 public:
-    explicit Histogram(const std::string& name, 
-                      const std::vector<double>& buckets = {0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10},
-                      const std::string& help = "",
-                      const Labels& labels = {})
+    explicit Histogram(const std::string& name,
+                       const std::vector<double>& buckets = {0.005, 0.01, 0.025, 0.05, 0.1, 0.25,
+                                                             0.5, 1, 2.5, 5, 10},
+                       const std::string& help = "", const Labels& labels = {})
         : Metric(name, help, labels), buckets_(buckets), count_(0), sum_(0) {
         bucket_counts_.resize(buckets.size() + 1, 0);  // +1 for +Inf bucket
     }
-    
+
     void observe(double value);
-    MetricType type() const override { return MetricType::Histogram; }
+    MetricType type() const override {
+        return MetricType::Histogram;
+    }
     std::string serialize() const override;
 
 private:
@@ -141,18 +155,19 @@ public:
         double value;
         Quantile(double q, double v) : quantile(q), value(v) {}
     };
-    
-    explicit Summary(const std::string& name, 
-                    const std::vector<double>& quantiles = {0.5, 0.9, 0.99},
-                    const std::string& help = "",
-                    const Labels& labels = {})
+
+    explicit Summary(const std::string& name,
+                     const std::vector<double>& quantiles = {0.5, 0.9, 0.99},
+                     const std::string& help = "", const Labels& labels = {})
         : Metric(name, help, labels), quantiles_(quantiles), count_(0), sum_(0) {
         // Add window for sliding average (1 minute)
         window_size_ = std::chrono::minutes(1);
     }
-    
+
     void observe(double value);
-    MetricType type() const override { return MetricType::Summary; }
+    MetricType type() const override {
+        return MetricType::Summary;
+    }
     std::string serialize() const override;
 
 private:
@@ -175,8 +190,10 @@ class Info : public Metric {
 public:
     explicit Info(const std::string& name, const Labels& labels = {}, const std::string& help = "")
         : Metric(name, help, labels) {}
-    
-    MetricType type() const override { return MetricType::Info; }
+
+    MetricType type() const override {
+        return MetricType::Info;
+    }
     std::string serialize() const override;
 };
 
@@ -187,30 +204,30 @@ public:
         static Registry instance;
         return instance;
     }
-    
-    template<typename T, typename... Args>
+
+    template <typename T, typename... Args>
     std::shared_ptr<T> create(Args&&... args) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto metric = std::make_shared<T>(std::forward<Args>(args)...);
         metrics_[metric->name()] = metric;
         return metric;
     }
-    
+
     std::string serialize() const;
-    
+
     // Get metric by name
     std::shared_ptr<Metric> get(const std::string& name) const {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = metrics_.find(name);
         return it != metrics_.end() ? it->second : nullptr;
     }
-    
+
     // Remove metric by name
     bool remove(const std::string& name) {
         std::lock_guard<std::mutex> lock(mutex_);
         return metrics_.erase(name) > 0;
     }
-    
+
     // Clear all metrics
     void clear() {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -223,4 +240,4 @@ private:
     std::map<std::string, std::shared_ptr<Metric>> metrics_;
 };
 
-} // namespace metrics 
+}  // namespace metrics

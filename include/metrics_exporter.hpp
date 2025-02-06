@@ -1,10 +1,11 @@
 #pragma once
 
-#include "metrics.hpp"
-#include "httplib.h"
-#include <string>
 #include <memory>
+#include <string>
 #include <thread>
+
+#include "httplib.h"
+#include "metrics.hpp"
 
 namespace metrics {
 
@@ -13,7 +14,7 @@ class MetricsExporter {
 public:
     explicit MetricsExporter(Registry& registry) : registry_(registry) {}
     virtual ~MetricsExporter() = default;
-    
+
     virtual void start() = 0;
     virtual void stop() = 0;
 
@@ -26,27 +27,27 @@ class HttpExporter : public MetricsExporter {
 public:
     HttpExporter(Registry& registry, const std::string& host = "0.0.0.0", int port = 9000)
         : MetricsExporter(registry), host_(host), port_(port), running_(false) {}
-    
+
     ~HttpExporter() {
         stop();
     }
-    
+
     void start() override {
-        if (running_) return;
-        
+        if (running_)
+            return;
+
         server_.Get("/metrics", [this](const httplib::Request&, httplib::Response& res) {
             res.set_content(registry_.serialize(), "text/plain");
         });
-        
+
         running_ = true;
-        server_thread_ = std::thread([this]() {
-            server_.listen(host_.c_str(), port_);
-        });
+        server_thread_ = std::thread([this]() { server_.listen(host_.c_str(), port_); });
     }
-    
+
     void stop() override {
-        if (!running_) return;
-        
+        if (!running_)
+            return;
+
         server_.stop();
         if (server_thread_.joinable()) {
             server_thread_.join();
@@ -66,11 +67,10 @@ private:
 // Windows does not support Unix sockets
 class UnixSocketExporter : public MetricsExporter {
 public:
-    UnixSocketExporter(Registry&, const std::string&)
-        : MetricsExporter(registry_) {
+    UnixSocketExporter(Registry&, const std::string&) : MetricsExporter(registry_) {
         throw std::runtime_error("Unix socket exporter is not supported on Windows");
     }
-    
+
     void start() override {}
     void stop() override {}
 };
@@ -83,35 +83,37 @@ public:
         // Remove old socket if exists
         std::remove(socket_path_.c_str());
     }
-    
+
     ~UnixSocketExporter() {
         stop();
         std::remove(socket_path_.c_str());
     }
-    
+
     void start() override {
-        if (running_) return;
-        
+        if (running_)
+            return;
+
         server_.Get("/metrics", [this](const httplib::Request&, httplib::Response& res) {
             res.set_content(registry_.serialize(), "text/plain");
         });
-        
+
         running_ = true;
         server_thread_ = std::thread([this]() {
-            #ifdef CPPHTTPLIB_USE_UNIX_DOMAIN_SOCKET
+#ifdef CPPHTTPLIB_USE_UNIX_DOMAIN_SOCKET
             server_.set_mount_point("/");
             if (!server_.bind_to_unix_domain_socket(socket_path_.c_str())) {
                 std::cerr << "Failed to bind to unix domain socket: " << socket_path_ << std::endl;
                 return;
             }
             server_.listen();
-            #endif
+#endif
         });
     }
-    
+
     void stop() override {
-        if (!running_) return;
-        
+        if (!running_)
+            return;
+
         server_.stop();
         if (server_thread_.joinable()) {
             server_thread_.join();
@@ -127,4 +129,4 @@ private:
 };
 #endif
 
-} // namespace metrics 
+}  // namespace metrics

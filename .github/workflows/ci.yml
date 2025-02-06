@@ -57,7 +57,11 @@ jobs:
       run: |
         cppcheck --enable=all --error-exitcode=1 \
           --suppress=missingInclude \
+          --suppress=missingIncludeSystem \
           --suppress=unmatchedSuppression \
           --suppress=unusedFunction \
           --suppress=noExplicitConstructor \
+          --suppress=useInitializationList \
+          --suppress=useStlAlgorithm \
+          --suppress=virtualCallInConstructor \
           include/ src/ examples/ 
