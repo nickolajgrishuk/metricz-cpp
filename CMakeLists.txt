@@ -50,12 +50,20 @@ if(BUILD_EXAMPLES)
 	# Basic example
 	add_executable(metricz_example examples/base_example.cpp)
 	target_link_libraries(metricz_example PRIVATE metricz)
-	target_include_directories(metricz_example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+	target_include_directories(metricz_example 
+		PRIVATE 
+			${CMAKE_CURRENT_SOURCE_DIR}/include
+			${httplib_SOURCE_DIR}
+	)
 	
 	# Exporters example
 	add_executable(exporters_example examples/exporters_example.cpp)
-	target_link_libraries(exporters_example PRIVATE metricz)
-	target_include_directories(exporters_example PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+	target_link_libraries(exporters_example PRIVATE metricz httplib)
+	target_include_directories(exporters_example 
+		PRIVATE 
+			${CMAKE_CURRENT_SOURCE_DIR}/include
+			${httplib_SOURCE_DIR}
+	)
 endif()
 
 # Installation
