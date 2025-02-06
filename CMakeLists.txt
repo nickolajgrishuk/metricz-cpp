@@ -83,7 +83,7 @@ install(EXPORT metricz-targets
 # Version configuration
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-	"metricz-config-version.cmake"
+	"${CMAKE_CURRENT_BINARY_DIR}/metricz-config-version.cmake"
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY SameMajorVersion
 )
