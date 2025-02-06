@@ -25,8 +25,8 @@ add_library(metricz
 
 target_include_directories(metricz
 	PUBLIC
-		<$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-		<$<INSTALL_INTERFACE:include>
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+		$<INSTALL_INTERFACE:include>
 	PRIVATE
 		${httplib_SOURCE_DIR}
 )
