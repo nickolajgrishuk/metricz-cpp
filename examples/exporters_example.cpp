@@ -11,7 +11,6 @@ int main(int argc, char* argv[]) {
     int port = 9000;
     std::string unix_socket = "/tmp/metrics.sock";
 
-    // Разбор аргументов командной строки
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "--host" && i + 1 < argc) {
@@ -23,21 +22,17 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Создаем реестр метрик
     metrics::Registry& registry = metrics::Registry::instance();
 
-    // Создаем метрики
     auto requests =
         registry.create<metrics::Counter>("http_requests_total", "Total number of HTTP requests");
 
     auto cpu_usage =
         registry.create<metrics::Gauge>("cpu_usage_percent", "Current CPU usage in percent");
 
-    // Создаем HTTP экспортер с указанными параметрами
     metrics::HttpExporter http_exporter(registry, host, port);
     http_exporter.start();
 
-    // Создаем Unix Socket экспортер
     metrics::UnixSocketExporter unix_exporter(registry, unix_socket);
     unix_exporter.start();
 
@@ -45,7 +40,6 @@ int main(int argc, char* argv[]) {
     std::cout << "  - HTTP: http://" << host << ":" << port << "/metrics\n";
     std::cout << "  - Unix Socket: " << unix_socket << "\n";
 
-    // Симулируем работу приложения
     while (true) {
         requests->inc();
         cpu_usage->set(static_cast<double>(rand()) / RAND_MAX * 100);
